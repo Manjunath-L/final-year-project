@@ -35,14 +35,13 @@ export default function AIGeneratorModal({
   const [diagramType, setDiagramType] = useState<DiagramType>('mindmap');
   const [prompt, setPrompt] = useState('');
   const [complexity, setComplexity] = useState('medium');
-  const [style, setStyle] = useState('standard');
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
   const examplePrompts = {
     mindmap: [
       'Create a mind map about digital marketing strategies',
-      'Make a mind map for project management methodology'
+      'Make a mind map for project JavaScript OOP Concept'
     ],
     flowchart: [
       'Generate a flowchart for user authentication process',
@@ -66,15 +65,14 @@ export default function AIGeneratorModal({
       console.log('Generating diagram:', {
         type: diagramType,
         prompt: prompt,
-        options: { complexity, style }
+        options: { complexity }
       });
       
       const response = await apiRequest('POST', '/api/generate', {
         type: diagramType,
         prompt,
         options: {
-          complexity,
-          style
+          complexity
         }
       });
 
@@ -125,7 +123,7 @@ export default function AIGeneratorModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-neutral-800">AI Diagram Generator</DialogTitle>
+          <DialogTitle className="text-xl font-semibold text-neutral-800">Diagram Generator</DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-2">
@@ -139,7 +137,7 @@ export default function AIGeneratorModal({
                   htmlFor="mindmap-type" 
                   className={`flex flex-col items-center p-4 border-2 ${diagramType === 'mindmap' ? 'border-primary-500 bg-primary-50' : 'border-neutral-200'} rounded-lg cursor-pointer ${diagramType !== 'mindmap' && 'hover:bg-neutral-50'}`}
                 >
-                  <span className={`material-icons text-${diagramType === 'mindmap' ? 'primary' : 'neutral'}-500 text-2xl mb-2`}>share</span>
+                  <span className={`material-icons ${diagramType === 'mindmap' ? 'text-primary-500' : 'text-neutral-500'} text-2xl mb-2`}>share</span>
                   <span className={`font-medium ${diagramType === 'mindmap' ? 'text-primary-600' : ''}`}>Mind Map</span>
                   <span className="text-xs text-neutral-500 mt-1">From text or concepts</span>
                 </Label>
@@ -151,7 +149,7 @@ export default function AIGeneratorModal({
                   htmlFor="flowchart-type" 
                   className={`flex flex-col items-center p-4 border-2 ${diagramType === 'flowchart' ? 'border-primary-500 bg-primary-50' : 'border-neutral-200'} rounded-lg cursor-pointer ${diagramType !== 'flowchart' && 'hover:bg-neutral-50'}`}
                 >
-                  <span className={`material-icons text-${diagramType === 'flowchart' ? 'primary' : 'neutral'}-500 text-2xl mb-2`}>account_tree</span>
+                  <span className={`material-icons ${diagramType === 'flowchart' ? 'text-primary-500' : 'text-neutral-500'} text-2xl mb-2`}>account_tree</span>
                   <span className={`font-medium ${diagramType === 'flowchart' ? 'text-primary-600' : ''}`}>Flowchart</span>
                   <span className="text-xs text-neutral-500 mt-1">From processes or code</span>
                 </Label>
@@ -196,36 +194,19 @@ export default function AIGeneratorModal({
           {/* Options */}
           <div className="mb-6">
             <h3 className="text-sm font-medium text-neutral-700 mb-2">Options</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label className="block text-sm text-neutral-600 mb-1">Complexity Level</Label>
-                <Select value={complexity} onValueChange={setComplexity}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select complexity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="simple">Simple (3-5 nodes)</SelectItem>
-                    <SelectItem value="medium">Medium (5-10 nodes)</SelectItem>
-                    <SelectItem value="complex">Complex (10-15 nodes)</SelectItem>
-                    <SelectItem value="comprehensive">Comprehensive (15+ nodes)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label className="block text-sm text-neutral-600 mb-1">Style Preset</Label>
-                <Select value={style} onValueChange={setStyle}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select style" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="standard">Standard</SelectItem>
-                    <SelectItem value="professional">Professional</SelectItem>
-                    <SelectItem value="creative">Creative</SelectItem>
-                    <SelectItem value="minimal">Minimal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label className="block text-sm text-neutral-600 mb-1">Complexity Level</Label>
+              <Select value={complexity} onValueChange={setComplexity}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select complexity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="simple">Simple (3-5 nodes)</SelectItem>
+                  <SelectItem value="medium">Medium (5-10 nodes)</SelectItem>
+                  <SelectItem value="complex">Complex (10-15 nodes)</SelectItem>
+                  <SelectItem value="comprehensive">Comprehensive (15+ nodes)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>

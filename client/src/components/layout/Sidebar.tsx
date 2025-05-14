@@ -45,6 +45,14 @@ export default function Sidebar() {
             <span className="text-xs mt-1">AI</span>
           </button>
         </Link>
+        <Link href="/help">
+          <button
+            className={`flex flex-col items-center justify-center w-12 h-12 rounded-lg ${isActive("/help") ? "bg-primary-50 text-primary-500" : "hover:bg-neutral-100"}`}
+          >
+            <span className="material-icons">help_outline</span>
+            <span className="text-xs mt-1">Help</span>
+          </button>
+        </Link>
       </div>
 
       {/* Wide Sidebar (Desktop) */}
@@ -95,7 +103,7 @@ export default function Sidebar() {
               >
                 auto_awesome
               </span>
-              AI Generator
+               Generator
             </button>
           </Link>
         </div>
@@ -103,12 +111,14 @@ export default function Sidebar() {
         <div className="flex-1"></div>
 
         <div className="border-t border-neutral-200 dark:border-gray-800 px-4 py-4 space-y-1">
-          <button className="flex items-center px-2 py-2 text-sm font-medium text-neutral-600 rounded-md w-full hover:bg-neutral-100 hover:text-neutral-900">
-            <span className="material-icons mr-3 text-neutral-400">
-              help_outline
-            </span>
-            Help
-          </button>
+          <Link href="/help">
+            <button className={`flex items-center px-2 py-2 text-sm font-medium rounded-md w-full ${isActive("/help") ? "bg-primary-50 text-primary-500" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"}`}>
+              <span className={`material-icons mr-3 ${isActive("/help") ? "text-primary-500" : "text-neutral-400"}`}>
+                help_outline
+              </span>
+              Help
+            </button>
+          </Link>
         </div>
       </div>
     </div>

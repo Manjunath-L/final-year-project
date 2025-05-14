@@ -15,7 +15,10 @@ import {
   MarkerType,
   type NodeTypes,
   type EdgeTypes,
+  getNodesBounds,
+  getViewportForBounds,
 } from '@xyflow/react';
+import { toPng } from 'html-to-image';
 import '@xyflow/react/dist/style.css';
 import './mindmap.css';
 import { useToast } from '@/hooks/use-toast';
@@ -30,9 +33,6 @@ import NodeProperties from './NodeProperties';
 // Define types for mind map data structure
 interface MindMapNodeData {
   label: string;
-  color?: string;
-  fontSize?: string;
-  fontFamily?: string;
   [key: string]: unknown;
 }
 
@@ -84,6 +84,10 @@ const defaultEdgeOptions = {
   markerEnd: MarkerType.ArrowClosed
 };
 const nodeOrigin: NodeOrigin = [0.5, 0.5];
+
+// Define image dimensions for download (adjust as needed)
+const imageWidth = 1920;
+const imageHeight = 1080;
 
 // Convert from MindMapData to ReactFlow format
 const convertToReactFlow = (data: MindMapData): { nodes: Node[], edges: Edge[] } => {
@@ -222,6 +226,7 @@ const convertToReactFlow = (data: MindMapData): { nodes: Node[], edges: Edge[] }
 // Implementation for MindMapEditor with Zustand store
 function MindMapEditorContent({ initialData, onSave }: MindMapEditorProps) {
   const { toast } = useToast();
+  const { getNodes } = useReactFlow();
   
   // Use our store with the selector
   const {
@@ -289,20 +294,42 @@ function MindMapEditorContent({ initialData, onSave }: MindMapEditorProps) {
 
   // Auto arrange nodes
   const handleAutoLayout = () => {
-    if (initialData) {
-      const { nodes: layoutNodes, edges: layoutEdges } = convertToReactFlow(initialData);
+    // Always use the current node tree from the store
+    const data = getNodeTree();
+    
+    // Check if we have valid data to lay out
+    if (!data || !data.rootId || !data.nodes || Object.keys(data.nodes).length === 0) {
+      toast({
+        title: 'Layout Failed',
+        description: 'Could not apply layout. No valid mind map data found.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      // Generate new layout with properly positioned nodes
+      const { nodes: layoutNodes, edges: layoutEdges } = convertToReactFlow(data);
+      
+      // Update the store with the new layout
       useMindMapStore.setState({ nodes: layoutNodes, edges: layoutEdges });
+      
+      // Give visual feedback
       toast({
         title: 'Layout Applied',
         description: 'Mind map has been auto-arranged',
       });
-    } else {
-      const data = getNodeTree();
-      const { nodes: layoutNodes, edges: layoutEdges } = convertToReactFlow(data);
-      useMindMapStore.setState({ nodes: layoutNodes, edges: layoutEdges });
+      
+      // Fit the view to show all nodes
+      setTimeout(() => {
+        reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: false });
+      }, 50);
+    } catch (error) {
+      console.error('Error applying auto layout:', error);
       toast({
-        title: 'Layout Applied',
-        description: 'Mind map has been auto-arranged',
+        title: 'Layout Failed',
+        description: 'An error occurred while arranging the mind map.',
+        variant: 'destructive',
       });
     }
   };
@@ -322,30 +349,84 @@ function MindMapEditorContent({ initialData, onSave }: MindMapEditorProps) {
     });
   }, [deleteNode, toast]);
 
+  // Handle download action - Updated to capture entire flow and use correct function names
+  const handleDownload = useCallback(async () => {
+    const flowViewport = document.querySelector('.react-flow__viewport');
+    if (!flowViewport) {
+      toast({
+        title: 'Error',
+        description: 'Could not find the mind map viewport element.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Use correct function name: getNodesBounds
+    const nodesBounds = getNodesBounds(getNodes()); 
+    // Use correct function name: getViewportForBounds
+    const viewport = getViewportForBounds(
+      nodesBounds,
+      imageWidth,
+      imageHeight,
+      0.5, // minZoom
+      2,   // maxZoom
+      0.1  // padding (optional, adjust as needed)
+    );
+
+    try {
+      const dataUrl = await toPng(flowViewport as HTMLElement, {
+        backgroundColor: '#ffffff',
+        width: imageWidth,
+        height: imageHeight,
+        style: {
+          width: `${imageWidth}px`,
+          height: `${imageHeight}px`,
+          // Use viewport properties for transform
+          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        },
+      });
+      const link = document.createElement('a');
+      link.download = 'mindmap.png';
+      link.href = dataUrl;
+      link.click();
+      toast({
+        title: 'Downloaded',
+        description: 'Mind map downloaded as PNG.',
+      });
+    } catch (error) {
+      console.error('Error downloading mind map:', error);
+      toast({
+        title: 'Download Failed',
+        description: 'Could not generate PNG image.',
+        variant: 'destructive',
+      });
+    }
+  }, [getNodes, toast]);
+
   return (
       <div className="flex-1 border rounded-md mindmap-container flex flex-col">
         {/* Toolbar */}
         <div className="flex items-center justify-between gap-2 p-2 border-b">
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleAutoLayout}
             >
               <span className="material-icons text-sm mr-1">auto_fix_high</span>
               Auto Layout
             </Button>
           </div>
-          <Button 
-            onClick={handleSave} 
-            size="sm" 
+          <Button
+            onClick={handleSave}
+            size="sm"
             className="ml-auto"
           >
             <span className="material-icons text-sm mr-1">save</span>
             Save
           </Button>
         </div>
-      
+
         <div className="flex-1 flex">
           <div className="flex-1">
             <ReactFlow
@@ -369,6 +450,17 @@ function MindMapEditorContent({ initialData, onSave }: MindMapEditorProps) {
             >
               <Background color="#f8f8f8" gap={16} />
               <Controls showInteractive={false} />
+              <Panel position="top-right">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownload}
+                  className="shadow-md"
+                >
+                  <span className="material-icons text-sm mr-1">download</span>
+                  Download PNG
+                </Button>
+              </Panel>
             </ReactFlow>
           </div>
 
@@ -377,25 +469,19 @@ function MindMapEditorContent({ initialData, onSave }: MindMapEditorProps) {
               node={{
                 id: selectedNode.id,
                 text: selectedNode.data.label,
-                color: selectedNode.data.color,
                 shape: selectedNode.type,
-                fontSize: selectedNode.data.fontSize,
-                fontFamily: selectedNode.data.fontFamily
               }}
               onUpdateProperty={(property, value) => {
                 // Handle property updates
                 if (property === 'text') {
                   selectedNode.data.label = value;
-                } else if (property === 'color') {
-                  selectedNode.data.color = value;
                 } else if (property === 'shape') {
                   selectedNode.type = value;
-                } else if (property === 'fontSize') {
-                  selectedNode.data.fontSize = value;
-                } else if (property === 'fontFamily') {
-                  selectedNode.data.fontFamily = value;
                 }
-                onNodesChange([{ type: 'change', id: selectedNode.id, data: selectedNode.data }]);
+                
+                // Notify React Flow about the change
+                // Ensure you only update properties that exist now
+                onNodesChange([{ type: 'change', id: selectedNode.id, data: { label: selectedNode.data.label } }]); // Only update relevant data
               }}
               onDelete={handleDeleteNode}
             />

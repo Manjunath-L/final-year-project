@@ -13,11 +13,15 @@ export default function TemplateCard({ template }: TemplateCardProps) {
   
   // Determine where to link based on template type
   const getTemplateLink = () => {
-    if (template.type === 'mindmap') {
-      return location === '/mindmap' ? '/mindmap' : '/mindmap';
-    } else {
-      return location === '/flowchart' ? '/flowchart' : '/flowchart';
-    }
+    const baseUrl = template.type === 'mindmap' ? '/mindmap' : '/flowchart';
+    // Pass template data as URL parameters
+    const params = new URLSearchParams({
+      templateId: template.id.toString(),
+      name: template.name,
+      type: template.type,
+      data: JSON.stringify(template.data)
+    });
+    return `${baseUrl}?${params.toString()}`;
   };
 
   return (
@@ -29,7 +33,7 @@ export default function TemplateCard({ template }: TemplateCardProps) {
       >
         <div className={`mb-3 relative rounded-lg overflow-hidden transform transition-transform duration-300 ${isHovered ? 'scale-105' : ''}`}>
           {template.thumbnail ? (
-            <div className="thumbnail-animated">
+            <div>
               <img 
                 src={template.thumbnail} 
                 alt={template.name} 

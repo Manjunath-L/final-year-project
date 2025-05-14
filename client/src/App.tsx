@@ -1,18 +1,41 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import Dashboard from "@/pages/Dashboard";
 import MindMapPage from "@/pages/MindMapPage";
 import FlowchartPage from "@/pages/FlowchartPage";
 import AIGeneratorPage from "@/pages/AIGeneratorPage";
+import HelpPage from "@/pages/HelpPage";
+import LoginPage from "@/pages/LoginPage";
+import SignupPage from "@/pages/SignupPage";
 import NotFound from "@/pages/not-found";
 import Navbar from "@/components/layout/Navbar";
 import Sidebar from "@/components/layout/Sidebar";
 import { useState, useEffect } from "react";
 import { LoadingScreen } from "@/components/ui/loading-spinner";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
-function App() {
+// Protected route component
+const ProtectedRoute: React.FC<{ component: React.ComponentType<any>; props?: any }> = ({ 
+  component: Component, 
+  props 
+}) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      setLocation('/login');
+    }
+  }, [isAuthenticated, isLoading, setLocation]);
+
+  if (isLoading) return <LoadingScreen />;
+  return isAuthenticated ? <Component {...props} /> : null;
+};
+
+function AppContent() {
   const [projectName, setProjectName] = useState<string>("Untitled Project");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { isAuthenticated } = useAuth();
 
   // Simulate loading time for app initialization
   useEffect(() => {
@@ -29,21 +52,30 @@ function App() {
         <LoadingScreen />
       ) : (
         <>
-          <Navbar projectName={projectName} setProjectName={setProjectName} />
+          <Navbar/>
           
           <div className="flex-1 flex overflow-hidden">
-            <Sidebar />
+            {isAuthenticated && <Sidebar />}
             
             <main className="flex-1 flex flex-col overflow-hidden">
               <Switch>
-                <Route path="/" component={Dashboard} />
+                <Route path="/login" component={LoginPage} />
+                <Route path="/signup" component={SignupPage} />
+                <Route path="/">
+                  {() => <ProtectedRoute component={Dashboard} />}
+                </Route>
                 <Route path="/mindmap/:id?">
-                  {(params) => <MindMapPage id={params.id} setProjectName={setProjectName} />}
+                  {(params) => <ProtectedRoute component={MindMapPage} props={{ id: params.id, setProjectName }} />}
                 </Route>
                 <Route path="/flowchart/:id?">
-                  {(params) => <FlowchartPage id={params.id} setProjectName={setProjectName} />}
+                  {(params) => <ProtectedRoute component={FlowchartPage} props={{ id: params.id, setProjectName }} />}
                 </Route>
-                <Route path="/ai-generator" component={AIGeneratorPage} />
+                <Route path="/ai-generator">
+                  {() => <ProtectedRoute component={AIGeneratorPage} />}
+                </Route>
+                <Route path="/help">
+                  {() => <ProtectedRoute component={HelpPage} />}
+                </Route>
                 <Route component={NotFound} />
               </Switch>
             </main>
@@ -53,6 +85,14 @@ function App() {
         </>
       )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

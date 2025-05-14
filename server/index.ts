@@ -1,4 +1,3 @@
-
 import express, { type Request, Response, NextFunction } from "express";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -9,8 +8,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -45,8 +44,8 @@ app.use((req, res, next) => {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+    console.error(`Server error: ${message}`);
     res.status(status).json({ message });
-    throw err;
   });
 
   if (app.get("env") === "development") {

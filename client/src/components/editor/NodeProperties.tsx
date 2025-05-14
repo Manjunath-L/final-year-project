@@ -15,10 +15,7 @@ interface NodeProps {
   id: string;
   text: string;
   children?: string[] | null;
-  color?: string;
   shape?: string;
-  fontSize?: string;
-  fontFamily?: string;
 }
 
 interface NodePropertiesProps {
@@ -26,23 +23,6 @@ interface NodePropertiesProps {
   onUpdateProperty: (property: string, value: any) => void;
   onDelete?: (nodeId: string) => void;
 }
-
-// Color palette
-const colors = [
-  { name: 'White', value: '#ffffff' },
-  { name: 'Green', value: '#4CAF50' },
-  { name: 'Red', value: '#f44336' },
-  { name: 'Blue', value: '#2196F3' },
-  { name: 'Yellow', value: '#FFC107' },
-  { name: 'Purple', value: '#9C27B0' },
-  { name: 'Cyan', value: '#00BCD4' },
-  { name: 'Pink', value: '#E91E63' },
-  { name: 'Orange', value: '#FF9800' },
-  { name: 'Light Blue', value: '#03A9F4' },
-  { name: 'Lime', value: '#CDDC39' },
-  { name: 'Teal', value: '#009688' },
-];
-
 
 export default function NodeProperties({ node, onUpdateProperty, onDelete }: NodePropertiesProps) {
   const [text, setText] = useState(node.text);
@@ -61,21 +41,6 @@ export default function NodeProperties({ node, onUpdateProperty, onDelete }: Nod
   // Update the node property when text input loses focus
   const handleTextBlur = () => {
     onUpdateProperty('text', text);
-  };
-  
-  // Update color
-  const handleColorChange = (color: string) => {
-    onUpdateProperty('color', color);
-  };
-  
-  // Update font
-  const handleFontChange = (font: string) => {
-    onUpdateProperty('fontFamily', font);
-  };
-  
-  // Update font size
-  const handleFontSizeChange = (size: string) => {
-    onUpdateProperty('fontSize', size);
   };
   
   // Toggle properties panel expansion
@@ -121,7 +86,6 @@ export default function NodeProperties({ node, onUpdateProperty, onDelete }: Nod
           <Tabs defaultValue="general">
             <TabsList className="w-full mb-4">
               <TabsTrigger value="general" className="flex-1">General</TabsTrigger>
-              <TabsTrigger value="style" className="flex-1">Style</TabsTrigger>
             </TabsList>
             
             <TabsContent value="general" className="space-y-4">
@@ -147,64 +111,6 @@ export default function NodeProperties({ node, onUpdateProperty, onDelete }: Nod
                   </Button>
                 </div>
               )}
-            </TabsContent>
-            
-            <TabsContent value="style" className="space-y-4">
-              <div>
-                <Label className="block text-sm font-medium text-neutral-700 mb-1">Fill Color</Label>
-                <div className="grid grid-cols-6 gap-2 mt-1">
-                  {colors.map((color) => (
-                    <button 
-                      key={color.value}
-                      className="w-6 h-6 rounded-full relative"
-                      style={{ backgroundColor: color.value }}
-                      title={color.name}
-                      onClick={() => handleColorChange(color.value)}
-                    >
-                      {node.color === color.value && (
-                        <span className="absolute inset-0 flex items-center justify-center">
-                          <span className="material-icons text-sm text-neutral-800">check</span>
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <Label className="block text-sm font-medium text-neutral-700 mb-1">Font Family</Label>
-                <Select 
-                  value={node.fontFamily || 'sans'} 
-                  onValueChange={handleFontChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select font family" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sans">Sans Serif</SelectItem>
-                    <SelectItem value="serif">Serif</SelectItem>
-                    <SelectItem value="mono">Monospace</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label className="block text-sm font-medium text-neutral-700 mb-1">Font Size</Label>
-                <Select 
-                  value={node.fontSize || 'md'} 
-                  onValueChange={handleFontSizeChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select font size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sm">Small</SelectItem>
-                    <SelectItem value="md">Medium</SelectItem>
-                    <SelectItem value="lg">Large</SelectItem>
-                    <SelectItem value="xl">Extra Large</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </TabsContent>
           </Tabs>
         </div>

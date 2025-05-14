@@ -35,7 +35,7 @@ const TerminalNode = memo((props: NodeProps) => {
       ...nodeStyles, 
       border: `2px solid ${isStart ? '#4CAF50' : '#FF5555'}`,
       borderRadius: '25px',
-      background: props.data.color || defaultColor
+      background: defaultColor
     }}>
       <Handle type="target" position={Position.Top} style={handleStyle} />
       <div style={{ textAlign: 'center', color: '#333' }}>{props.data.label}</div>
@@ -48,7 +48,7 @@ const ProcessNode = memo((props: NodeProps) => (
   <div style={{ 
     ...nodeStyles, 
     border: '2px solid #2196F3',
-    background: props.data.color || '#ADD8E6'  // Use data.color or default to light blue
+    background: '#ADD8E6'
   }}>
     <Handle type="target" position={Position.Top} style={handleStyle} />
     <div style={{ textAlign: 'center', color: '#333' }}>{props.data.label}</div>
@@ -78,7 +78,7 @@ const DecisionNode = memo((props: NodeProps) => (
     width: '120px', 
     height: '120px', 
     transform: 'rotate(45deg)',
-    background: props.data.color || '#FFF9C4',
+    background: '#FFF9C4',
     border: '2px solid #FFC107',
     display: 'flex',
     alignItems: 'center',
@@ -123,7 +123,7 @@ const InputNode = memo((props: NodeProps) => (
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    background: props.data.color || '#F0E68C', // Use data.color or default to light gold
+    background: '#F0E68C',
     border: '2px solid #00BCD4',
     transform: 'perspective(20px) rotateX(1deg)',
     paddingTop: '10px',
@@ -144,7 +144,7 @@ const OutputNode = memo((props: NodeProps) => (
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    background: props.data.color || '#D8BFD8', // Use data.color or default to light purple
+    background: '#D8BFD8',
     border: '2px solid #FF5722',
     transform: 'perspective(20px) rotateX(-1deg)',
     paddingTop: '10px',

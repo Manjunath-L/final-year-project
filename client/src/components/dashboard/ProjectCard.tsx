@@ -37,9 +37,13 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         description: 'Your project has been deleted successfully.',
       });
       
-      // Invalidate projects query to refresh the list
-      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      // Invalidate projects query to mark it stale
+      await queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      // Explicitly refetch the query to update the UI immediately
+      await queryClient.refetchQueries({ queryKey: ['/api/projects'] });
+
     } catch (error) {
+      console.error("Error deleting project:", error);
       toast({
         title: 'Error',
         description: 'Failed to delete project.',
@@ -66,7 +70,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       <Link href={getProjectLink(project)}>
         <div className="relative aspect-video bg-neutral-50">
           {project.thumbnail ? (
-            <div className="thumbnail-animated w-full h-full">
+            <div className="w-full h-full">
               <img 
                 src={project.thumbnail} 
                 alt={project.name} 
@@ -107,7 +111,6 @@ export default function ProjectCard({ project }: ProjectCardProps) {
               <DropdownMenuItem asChild>
                 <Link href={getProjectLink(project)}>Edit</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>Duplicate</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleDelete} className="text-red-600">
                 Delete

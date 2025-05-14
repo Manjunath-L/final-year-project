@@ -30,6 +30,11 @@ export default function MindMapPage({ id, setProjectName }: MindMapPageProps) {
   const { toast } = useToast();
   const [mindMapData, setMindMapData] = useState<MindMapData | undefined>(undefined);
   
+  // Get URL parameters for template data
+  const params = new URLSearchParams(window.location.search);
+  const templateData = params.get('data');
+  const templateName = params.get('name');
+  
   // Fetch project data if id is provided
   const { data: project, isLoading } = useQuery<Project>({
     queryKey: id ? [`/api/projects/${id}`] : ['/api/dummy-key'],
@@ -41,72 +46,121 @@ export default function MindMapPage({ id, setProjectName }: MindMapPageProps) {
     if (project) {
       setProjectName(project.name);
       setMindMapData(project.data);
-    } else if (!id) {
-      // New project
-      setProjectName('Untitled Mind Map');
-      setMindMapData({
-        rootId: '1',
-        nodes: {
-          '1': { id: '1', text: 'Central Idea', children: [] }
+    } else if (templateData) {
+      // If template data is provided in URL, use it
+      try {
+        const parsedData = JSON.parse(templateData);
+        setMindMapData(parsedData);
+        if (templateName) {
+          setProjectName(templateName);
+        } else {
+          setProjectName('Untitled Mind Map');
         }
-      });
-    }
-  }, [project, id, setProjectName]);
-  
-  // Mutation for saving the project
-  const saveMutation = useMutation({
-    mutationFn: async (data: MindMapData) => {
-      // Simple thumbnail generation
-      const element = document.querySelector('.mindmap-canvas');
-      let thumbnail = '';
-      
-      if (element) {
-        try {
-          const canvas = await html2canvas(element as HTMLElement);
-          thumbnail = canvas.toDataURL('image/png');
-        } catch (error) {
-          console.error('Error generating thumbnail:', error);
-        }
+      } catch (error) {
+        console.error('Error parsing template data:', error);
+        setDefaultMindMap();
       }
-      
+    } else if (!id) {
+      // New project with default data
+      setDefaultMindMap();
+    }
+  }, [project, id, setProjectName, templateData, templateName]);
+
+  // Helper to set default mindmap data
+  const setDefaultMindMap = () => {
+    setProjectName('Untitled Mind Map');
+    setMindMapData({
+      rootId: '1',
+      nodes: {
+        '1': { id: '1', text: 'Central Idea', children: [] }
+      }
+    });
+  };
+
+  // Handle save functionality
+  const handleSave = async (data: MindMapData) => {
+    try {
+      // Validate data structure before saving
+      if (!data.rootId || !data.nodes || typeof data.nodes !== 'object') {
+        throw new Error('Invalid mind map data structure');
+      }
+
+      // Create thumbnail with compression
+      const element = document.querySelector('.mindmap-canvas') as HTMLElement;
+      let thumbnail = '';
+      if (element) {
+        const canvas = await html2canvas(element);
+        // Create a new canvas for compression
+        const maxWidth = 800;
+        const maxHeight = 600;
+        const compressedCanvas = document.createElement('canvas');
+        const ctx = compressedCanvas.getContext('2d');
+        
+        // Calculate new dimensions while maintaining aspect ratio
+        let width = canvas.width;
+        let height = canvas.height;
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        if (height > maxHeight) {
+          width = (width * maxHeight) / height;
+          height = maxHeight;
+        }
+        
+        // Set canvas size and draw scaled image
+        compressedCanvas.width = width;
+        compressedCanvas.height = height;
+        ctx?.drawImage(canvas, 0, 0, width, height);
+        
+        // Convert to compressed JPEG
+        thumbnail = compressedCanvas.toDataURL('image/jpeg', 0.7);
+      }
+
       if (id) {
         // Update existing project
-        return apiRequest('PUT', `/api/projects/${id}`, {
+        const response = await apiRequest('PUT', `/api/projects/${id}`, {
           data,
-          thumbnail,
-          updatedAt: new Date()
+          thumbnail
         });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.details || errorData.message || 'Failed to save mind map');
+        }
       } else {
         // Create new project
-        return apiRequest('POST', '/api/projects', {
-          name: 'Untitled Mind Map',
+        const response = await apiRequest('POST', '/api/projects', {
+          name: templateName || 'Untitled Mind Map',
           type: 'mindmap',
           data,
-          thumbnail,
-          userId: 1 // Default user ID for demo
+          thumbnail
         });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.details || errorData.message || 'Failed to create mind map');
+        }
+        
+        const newProject = await response.json();
+        // Redirect to the new project's URL
+        window.history.pushState({}, '', `/mindmap/${newProject.id}`);
       }
-    },
-    onSuccess: () => {
+
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      
       toast({
         title: 'Success',
-        description: 'Mind map saved successfully',
+        description: 'Mind map saved successfully!',
       });
-      
-      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-    },
-    onError: () => {
+    } catch (error) {
+      console.error('Error saving mind map:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save mind map',
+        description: error instanceof Error ? error.message : 'Failed to save mind map',
         variant: 'destructive',
       });
     }
-  });
-  
-  // Handle save
-  const handleSave = (data: MindMapData) => {
-    saveMutation.mutate(data);
   };
   
   if (isLoading && id) {

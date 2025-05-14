@@ -1,52 +1,10 @@
-import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import { Moon, Sun, Pencil } from "lucide-react";
+
+import { Link } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast";
 
-interface NavbarProps {
-  projectName: string;
-  setProjectName: (name: string) => void;
-}
-
-export default function Navbar({ projectName, setProjectName }: NavbarProps) {
-  const [location, setLocation] = useLocation();
-  const [tempName, setTempName] = useState(projectName);
-  const [isEditingName, setIsEditingName] = useState(false);
-  // Using only light theme - dark theme removed per request
-  const { toast } = useToast();
-
-  const isProjectPage =
-    location.includes("/mindmap") || location.includes("/flowchart");
-
-  const handleSaveName = () => {
-    setProjectName(tempName);
-    setIsEditingName(false);
-  };
-
-  const handleNewProject = () => {
-    if (location.includes("/mindmap")) {
-      setLocation("/mindmap");
-    } else if (location.includes("/flowchart")) {
-      setLocation("/flowchart");
-    } else {
-      setLocation("/");
-    }
-  };
+export default function Navbar() {
+  const { user, isAuthenticated, logout } = useAuth();
 
   return (
     <header className="bg-white border-b border-neutral-200 shadow-sm z-10">
@@ -65,83 +23,36 @@ export default function Navbar({ projectName, setProjectName }: NavbarProps) {
               </svg>
               <Link href="/">
                 <span className="ml-2 text-xl font-bold text-primary-600 cursor-pointer">
-                  FlowMind AI
+                    Concept Crafter
                 </span>
               </Link>
             </div>
           </div>
 
-          {/* Project Controls */}
-          {isProjectPage && (
-            <div className="flex items-center">
-              <div className="flex items-center ml-4">
-                <span className="text-sm text-neutral-500 mr-2">
-                  {projectName}
+          {/* Auth buttons */}
+          <div className="flex items-center gap-4">
+            {isAuthenticated ? (
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-neutral-600">
+                  Welcome, <span className="font-medium">{user?.username}</span>
                 </span>
-                <button
-                  onClick={() => setIsEditingName(true)}
-                  className="text-neutral-400 hover:text-neutral-500"
-                >
-                  <Pencil size={16} />
-                </button>
-              </div>
-
-              <div className="border-l border-neutral-200 h-6 mx-4"></div>
-
-              <div className="flex space-x-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center"
-                >
-                  <span className="material-icons text-sm mr-1">save</span>
-                  Save
+                <Button variant="outline" size="sm" onClick={logout}>
+                  Sign out
                 </Button>
               </div>
-            </div>
-          )}
-
-          {/* User Menu */}
-          <div className="flex items-center ml-6">
-            {/* User Menu */}
-            <div className="ml-3 relative">
-              <div>
-                <button className="flex items-center max-w-xs bg-white rounded-full focus:outline-none">
-                  <span className="inline-block h-8 w-8 rounded-full overflow-hidden bg-neutral-200">
-                    <svg
-                      className="h-full w-full text-neutral-400"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                  </span>
-                </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/login">Sign in</Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link href="/signup">Sign up</Link>
+                </Button>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Project Name Edit Dialog */}
-      <Dialog open={isEditingName} onOpenChange={setIsEditingName}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Project Name</DialogTitle>
-          </DialogHeader>
-          <Input
-            value={tempName}
-            onChange={(e) => setTempName(e.target.value)}
-            autoFocus
-          />
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsEditingName(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveName}>Save</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </header>
   );
 }

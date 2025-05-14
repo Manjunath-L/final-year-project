@@ -150,11 +150,16 @@ export class MemStorage implements IStorage {
       data: {
         rootId: '1',
         nodes: {
-          '1': { id: '1', text: 'Central Idea', children: ['2', '3', '4', '5'] },
-          '2': { id: '2', text: 'Branch 1', children: [] },
-          '3': { id: '3', text: 'Branch 2', children: [] },
-          '4': { id: '4', text: 'Branch 3', children: [] },
-          '5': { id: '5', text: 'Branch 4', children: [] }
+          '1': { id: '1', text: 'Central Topic', children: ['2', '3', '4'] },
+          '2': { id: '2', text: 'Idea 1', children: ['5', '6'] },
+          '3': { id: '3', text: 'Idea 2', children: ['7', '8'] },
+          '4': { id: '4', text: 'Idea 3', children: ['9', '10'] },
+          '5': { id: '5', text: 'Detail 1.1', children: [] },
+          '6': { id: '6', text: 'Detail 1.2', children: [] },
+          '7': { id: '7', text: 'Detail 2.1', children: [] },
+          '8': { id: '8', text: 'Detail 2.2', children: [] },
+          '9': { id: '9', text: 'Detail 3.1', children: [] },
+          '10': { id: '10', text: 'Detail 3.2', children: [] }
         }
       },
       thumbnail: ''
@@ -168,7 +173,7 @@ export class MemStorage implements IStorage {
       data: {
         nodes: [
           { id: '1', type: 'input', data: { label: 'Start' }, position: { x: 250, y: 0 } },
-          { id: '2', type: 'default', data: { label: 'Decision Point' }, position: { x: 250, y: 100 } },
+          { id: '2', type: 'default', data: { label: 'Decision?' }, position: { x: 250, y: 100 } },
           { id: '3', type: 'default', data: { label: 'Option A' }, position: { x: 100, y: 200 } },
           { id: '4', type: 'default', data: { label: 'Option B' }, position: { x: 400, y: 200 } },
           { id: '5', type: 'output', data: { label: 'Result A' }, position: { x: 100, y: 300 } },
@@ -194,12 +199,15 @@ export class MemStorage implements IStorage {
         rootId: '1',
         nodes: {
           '1': { id: '1', text: 'Main Concept', children: ['2', '3', '4'] },
-          '2': { id: '2', text: 'Related Concept 1', children: ['5', '6'] },
-          '3': { id: '3', text: 'Related Concept 2', children: ['7'] },
-          '4': { id: '4', text: 'Related Concept 3', children: [] },
-          '5': { id: '5', text: 'Sub-concept 1.1', children: [] },
-          '6': { id: '6', text: 'Sub-concept 1.2', children: [] },
-          '7': { id: '7', text: 'Sub-concept 2.1', children: [] }
+          '2': { id: '2', text: 'Concept 1', children: ['5', '6'] },
+          '3': { id: '3', text: 'Concept 2', children: ['7', '8'] },
+          '4': { id: '4', text: 'Concept 3', children: ['9', '10'] },
+          '5': { id: '5', text: 'Detail 1.1', children: [] },
+          '6': { id: '6', text: 'Detail 1.2', children: [] },
+          '7': { id: '7', text: 'Detail 2.1', children: [] },
+          '8': { id: '8', text: 'Detail 2.2', children: [] },
+          '9': { id: '9', text: 'Detail 3.1', children: [] },
+          '10': { id: '10', text: 'Detail 3.2', children: [] }
         }
       },
       thumbnail: ''

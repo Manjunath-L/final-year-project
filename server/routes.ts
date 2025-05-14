@@ -6,11 +6,19 @@ import { insertProjectSchema, insertTemplateSchema } from "@shared/schema";
 import type { InsertProject } from "../shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { mindMapDataSchema, flowchartDataSchema } from "@shared/schema";
+import { connectToDatabase } from "./db";
+import authRoutes from "./src/routes/auth";
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
-
-  // API Routes
+  
+  // Connect to MongoDB
+  await connectToDatabase();
+  
+  // Register authentication routes
+  app.use("/api/auth", authRoutes);
 
   // Projects Routes
   app.get("/api/projects", async (req: Request, res: Response) => {
@@ -64,9 +72,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const validationError = fromZodError(error);
-        return res.status(400).json({ message: validationError.message });
+        return res.status(400).json({ 
+          message: "Validation error", 
+          details: validationError.message,
+          errors: error.errors 
+        });
       }
-      res.status(500).json({ message: "Failed to create project" });
+      console.error('Error creating project:', error);
+      res.status(500).json({ 
+        message: "Failed to create project",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
@@ -80,11 +96,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Project not found" });
       }
 
+      // Validate the update data
+      const updateData = { ...req.body };
+      if (updateData.data) {
+        // Validate data based on project type
+        if (existingProject.type === 'mindmap') {
+          mindMapDataSchema.parse(updateData.data);
+        } else if (existingProject.type === 'flowchart') {
+          flowchartDataSchema.parse(updateData.data);
+        }
+      }
+
       // Update project
-      const updatedProject = await storage.updateProject(id, req.body);
+      const updatedProject = await storage.updateProject(id, updateData);
+      if (!updatedProject) {
+        return res.status(500).json({ message: "Failed to update project" });
+      }
       res.json(updatedProject);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update project" });
+      if (error instanceof z.ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ 
+          message: "Validation error", 
+          details: validationError.message,
+          errors: error.errors 
+        });
+      }
+      console.error('Error updating project:', error);
+      res.status(500).json({ 
+        message: "Failed to update project",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
@@ -136,7 +178,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI Generation
   app.post("/api/generate", async (req: Request, res: Response) => {
     try {
       const { type, prompt, options } = req.body;
@@ -152,10 +193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res
           .status(400)
           .json({ message: "Type must be either 'mindmap' or 'flowchart'" });
-      }
-
-      // Hardcoded API key as requested
-      const apiKey = '';
+      }      const apiKey = process.env.OPENROUTER_API_KEY || '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';
 
       // Construct system prompt based on diagram type
       let systemPrompt = "";
@@ -288,41 +326,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Generating ${type} with complexity: ${complexity}, node count: ${nodeCount}`);
       
       try {
-        console.log("Making Gemini API request with direct API key");
+        console.log("Making OpenRouter API request with Llama-4-Maverick model");
         
-        // Use Gemini API with the correct parameters and direct API key
+        // Use OpenRouter API to access Llama-4-Maverick model
         const response = await axios({
           method: 'post',
-          url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
+          url: 'https://openrouter.ai/api/v1/chat/completions',
           headers: {
             'Content-Type': 'application/json',
-            'x-goog-api-key': apiKey
+            'Authorization': `Bearer ${apiKey}`,
+            'HTTP-Referer': 'https://your-site-url.com', // Replace with your actual site URL
+            'X-Title': 'Diagram Generator'
           },
           data: {
-            contents: [{
-              parts: [{
-                text: `${systemPrompt}\n\nCreate a ${type} with approximately ${nodeCount} nodes that represents: ${prompt}\n\nRespond ONLY with valid JSON, nothing else.`
-              }]
-            }],
-            generationConfig: {
-              temperature: 0.1,
-              topK: 32,
-              topP: 0.95,
-              maxOutputTokens: 8192
-            }
+            model: 'meta-llama/llama-4-maverick:free',
+            messages: [
+              {
+                role: 'system',
+                content: systemPrompt
+              },
+              {
+                role: 'user',
+                content: `Create a ${type} with approximately ${nodeCount} nodes that represents: ${prompt}\n\nRespond ONLY with valid JSON, nothing else.`
+              }
+            ],
+            temperature: 0.1,
+            max_tokens: 8192
           }
-        });
-
-        console.log("API response received");
+        });        console.log("API response received");
         
-        if (!response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+        if (!response.data?.choices?.[0]?.message?.content) {
           console.error("Invalid API response structure:", JSON.stringify(response.data));
           return res.status(500).json({ 
             message: "AI generation failed. Invalid response structure." 
           });
         }
 
-        let generatedText = response.data.candidates[0].content.parts[0].text;
+        let generatedText = response.data.choices[0].message.content;
         console.log("Generated text length:", generatedText.length);
 
         // Clean up the response to extract valid JSON

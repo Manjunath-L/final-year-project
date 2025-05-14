@@ -49,12 +49,12 @@ export default function Dashboard() {
         />
         
         <FeatureCard 
-          title="AI Generation"
+          title=" Generation"
           description="Generate diagrams from text descriptions or code"
           icon="auto_awesome"
           color="accent"
           link="/ai-generator"
-          buttonText="AI Generate"
+          buttonText=" Generate"
         />
       </div>
       

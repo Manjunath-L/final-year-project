@@ -68,7 +68,7 @@ export default function AIGeneratorPage() {
 
       toast({
         title: 'Success',
-        description: `AI generated ${isMindMap ? 'mind map' : 'flowchart'} created successfully`,
+        description: `Generated ${isMindMap ? 'mind map' : 'flowchart'} created successfully`,
       });
       
     } catch (error) {

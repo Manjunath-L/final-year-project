@@ -1,5 +1,16 @@
 import { Node, Edge } from 'reactflow';
-import { MindMapNode, MindMapData } from '@/lib/mindmapUtils';
+
+// Added MindMap types here to resolve undefined errors
+export interface MindMapNode {
+  id: string;
+  text: string;
+  children: string[];
+}
+
+export interface MindMapData {
+  rootId: string;
+  nodes: Record<string, MindMapNode>;
+}
 
 // Project types
 export interface Project {
@@ -38,7 +49,7 @@ export interface Template {
 }
 
 // Mind Map types (re-exported for convenience)
-export type { MindMapNode, MindMapData };
+// export type { MindMapNode, MindMapData }; // This re-export might be redundant now, remove if causing issues
 
 // Flowchart types
 export interface FlowchartData {
@@ -74,9 +85,6 @@ export interface NodeProperties {
   id: string;
   text: string;
   children: string[];
-  color?: string;
   shape?: string;
-  fontSize?: string;
-  fontFamily?: string;
   connectorStyle?: string;
 }

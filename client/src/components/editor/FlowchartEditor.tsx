@@ -15,7 +15,10 @@ import ReactFlow, {
   Panel,
   ReactFlowProvider,
   useReactFlow,
+  getNodesBounds,
+  getViewportForBounds,
 } from 'reactflow';
+import { toPng } from 'html-to-image';
 import 'reactflow/dist/style.css';
 import NodeProperties from './NodeProperties';
 import { Button } from "@/components/ui/button";
@@ -23,6 +26,7 @@ import FlowchartSymbolPalette from './FlowchartSymbolPalette';
 import { nodeTypes } from './FlowchartNodes';
 import { useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
+
 
 interface FlowchartEditorProps {
   initialNodes?: Node[];
@@ -71,6 +75,10 @@ const defaultEdges: Edge[] = [
     markerEnd: { type: MarkerType.ArrowClosed }
   },
 ];
+
+// Define image dimensions for download (adjust as needed)
+const imageWidth = 1920;
+const imageHeight = 1080;
 
 // Export default wrapper component that provides ReactFlow context
 export default function FlowchartEditor(props: FlowchartEditorProps) {
@@ -154,15 +162,6 @@ function FlowchartEditorContent({
               ...node,
               type: value
             };
-          } else if (property === 'fontSize' || property === 'fontFamily') {
-            // Update data with style properties
-            return {
-              ...node,
-              data: {
-                ...node.data,
-                [property]: value
-              }
-            };
           }
         }
         return node;
@@ -193,14 +192,6 @@ function FlowchartEditorContent({
         return {
           ...prev,
           type: value
-        };
-      } else if (property === 'fontSize' || property === 'fontFamily') {
-        return {
-          ...prev,
-          data: {
-            ...prev.data,
-            [property]: value
-          }
         };
       }
 
@@ -335,31 +326,93 @@ function FlowchartEditorContent({
     }
   };
 
-  // Auto layout the flowchart using the enhanced algorithm
+  // Auto layout function
   const autoLayout = () => {
-    // Import the enhanced layout algorithm
-    import('@/lib/flowchartUtils').then(({ applyAutoLayout }) => {
-      // Apply the hierarchical layout
-      const { nodes: layoutedNodes, edges: layoutedEdges } = applyAutoLayout(nodes, edges);
-      
-      // Update nodes with new positions
-      setNodes(layoutedNodes);
-      
-      // Update edges with enhanced properties like markers and handles
-      setEdges(layoutedEdges);
-      
-      // Fit the view to show all nodes
-      setTimeout(() => {
-        reactFlowInstance.fitView({ padding: 0.2 });
-      }, 50);
+    try {
+      // Import and use applyAutoLayout
+      import('@/lib/flowchartUtils').then(({ applyAutoLayout }) => {
+        // Convert ReactFlow nodes to FlowchartNodes
+        const flowchartNodes = nodes.map(node => ({
+          ...node,
+          type: node.type || 'default',
+        }));
+        
+        const { nodes: layoutedNodes, edges: layoutedEdges } = applyAutoLayout(flowchartNodes, edges);
+        
+        // Update the nodes with new positions
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+        
+        // Center the view on the new layout
+        setTimeout(() => {
+          reactFlowInstance.fitView({ padding: 0.2 });
+        }, 50);
 
-      toast({
-        title: 'Enhanced Auto Layout Applied',
-        description: `Your flowchart has been arranged with a hierarchical layout`,
-        duration: 1500,
+        toast({
+          title: 'Layout Applied',
+          description: 'Flowchart has been automatically arranged',
+        });
       });
-    });
+    } catch (error) {
+      console.error('Error applying auto layout:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to apply automatic layout',
+        variant: 'destructive',
+      });
+    }
   };
+
+  // Handle download action - Updated to capture entire flow
+  const handleDownload = useCallback(async () => {
+    const flowViewport = document.querySelector('.react-flow__viewport');
+    if (!flowViewport) {
+      toast({
+        title: 'Error',
+        description: 'Could not find the flowchart viewport element.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const nodesBounds = getNodesBounds(reactFlowInstance.getNodes());
+    const viewport = getViewportForBounds(
+      nodesBounds,
+      imageWidth,
+      imageHeight,
+      0.5, // minZoom (adjust as needed)
+      2,   // maxZoom (adjust as needed)
+      0.1  // padding
+    );
+
+    try {
+      const dataUrl = await toPng(flowViewport as HTMLElement, {
+        backgroundColor: '#ffffff',
+        width: imageWidth,
+        height: imageHeight,
+        style: {
+          width: `${imageWidth}px`,
+          height: `${imageHeight}px`,
+          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        },
+      });
+      const link = document.createElement('a');
+      link.download = 'flowchart.png';
+      link.href = dataUrl;
+      link.click();
+      toast({
+        title: 'Downloaded',
+        description: 'Flowchart downloaded as PNG.',
+      });
+    } catch (error) {
+      console.error('Error downloading flowchart:', error);
+      toast({
+        title: 'Download Failed',
+        description: 'Could not generate PNG image.',
+        variant: 'destructive',
+      });
+    }
+  }, [toast, reactFlowInstance]);
 
   return (
     <div className="flex-1 flex flex-col h-full">
@@ -397,6 +450,7 @@ function FlowchartEditorContent({
       <div className="flex-1 flex overflow-hidden">
         {/* Symbol Palette */}
         <FlowchartSymbolPalette onAddNode={addNodeWithType} />
+
 
         {/* Flowchart Canvas */}
         <div className="flex-1 relative" ref={reactFlowWrapper}>
@@ -436,6 +490,17 @@ function FlowchartEditorContent({
               style={{ height: 100 }}
             />
             <Background color="#aaa" gap={16} className="bg-white" />
+            <Panel position="top-right">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownload}
+                className="shadow-md"
+              >
+                <span className="material-icons text-sm mr-1">download</span>
+                Download PNG
+              </Button>
+            </Panel>
           </ReactFlow>
         </div>
 
@@ -446,10 +511,7 @@ function FlowchartEditorContent({
               id: selectedNode.id,
               text: selectedNode.data.label,
               children: [],
-              color: selectedNode.data.color,
               shape: selectedNode.type,
-              fontSize: selectedNode.data.fontSize,
-              fontFamily: selectedNode.data.fontFamily
             }} 
             onUpdateProperty={updateNodeProperty}
             onDelete={deleteNode}
