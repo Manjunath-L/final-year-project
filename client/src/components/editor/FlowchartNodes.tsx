@@ -114,47 +114,85 @@ const DecisionNode = memo((props: NodeProps) => (
   </div>
 ));
 
-const InputNode = memo((props: NodeProps) => (
-  <div style={{ 
-    ...nodeStyles, 
-    width: '150px',
-    height: '60px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    background: '#F0E68C',
-    border: '2px solid #00BCD4',
-    transform: 'perspective(20px) rotateX(1deg)',
-    paddingTop: '10px',
-    paddingBottom: '10px'
-  }}>
-    <Handle type="target" position={Position.Top} style={handleStyle} id="input-target" />
-    <div style={{ textAlign: 'center', color: '#333' }}>{props.data.label}</div>
-    <Handle type="source" position={Position.Bottom} style={handleStyle} id="input-source" />
-  </div>
-));
+const InputNode = memo((props: NodeProps) => {
+  // Using an approach to overcome ReactFlow border issue
+  return (
+    <div 
+      className="custom-node"
+      style={{
+        width: '150px',
+        height: '60px',
+        position: 'relative',
+        // Critically important - transparent background and no border on container
+        background: 'transparent',
+        border: 'none',
+        borderRadius: '0',
+        overflow: 'visible'
+      }}
+    >
+      {/* The actual visible node is an inner element */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '0',
+          left: '0',
+          width: '100%',
+          height: '100%',
+          background: '#F0E68C',
+          border: '2px solid #00BCD4',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          clipPath: 'polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%)'
+        }}
+      >
+        <div style={{ textAlign: 'center', color: '#333' }}>{props.data.label}</div>
+      </div>
+      <Handle type="target" position={Position.Top} style={handleStyle} />
+      <Handle type="source" position={Position.Bottom} style={handleStyle} />
+    </div>
+  );
+});
 
-const OutputNode = memo((props: NodeProps) => (
-  <div style={{ 
-    ...nodeStyles, 
-    width: '150px',
-    height: '60px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    background: '#D8BFD8',
-    border: '2px solid #FF5722',
-    transform: 'perspective(20px) rotateX(-1deg)',
-    paddingTop: '10px',
-    paddingBottom: '10px'
-  }}>
-    <Handle type="target" position={Position.Top} style={handleStyle} id="output-target" />
-    <div style={{ textAlign: 'center', color: '#333' }}>{props.data.label}</div>
-    <Handle type="source" position={Position.Bottom} style={handleStyle} id="output-source" />
-  </div>
-));
+const OutputNode = memo((props: NodeProps) => {
+  // Using an approach to overcome ReactFlow border issue
+  return (
+    <div 
+      className="custom-node"
+      style={{
+        width: '150px',
+        height: '60px',
+        position: 'relative',
+        // Critically important - transparent background and no border on container
+        background: 'transparent',
+        border: 'none',
+        borderRadius: '0',
+        overflow: 'visible'
+      }}
+    >
+      {/* The actual visible node is an inner element */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '0',
+          left: '0',
+          width: '100%',
+          height: '100%',
+          background: '#D8BFD8',
+          border: '2px solid #FF5722',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          clipPath: 'polygon(0% 0%, 85% 0%, 100% 100%, 15% 100%)'
+        }}
+      >
+        <div style={{ textAlign: 'center', color: '#333' }}>{props.data.label}</div>
+      </div>
+      <Handle type="target" position={Position.Top} style={handleStyle} />
+      <Handle type="source" position={Position.Bottom} style={handleStyle} />
+    </div>
+  );
+});
 
 // Additional Node Types
 const DocumentNode = memo((props: NodeProps) => (

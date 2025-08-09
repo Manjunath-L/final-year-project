@@ -10,13 +10,12 @@ import { mindMapDataSchema, flowchartDataSchema } from "@shared/schema";
 import { connectToDatabase } from "./db";
 import authRoutes from "./src/routes/auth";
 
-
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
-  
+
   // Connect to MongoDB
   await connectToDatabase();
-  
+
   // Register authentication routes
   app.use("/api/auth", authRoutes);
 
@@ -53,7 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!projectData.data) {
         projectData.data = {}; // Default empty data
       }
-      
+
       // Validate request body
       const validatedData = insertProjectSchema.parse(projectData);
 
@@ -63,25 +62,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: validatedData.type,
         data: validatedData.data || {},
         userId: validatedData.userId,
-        thumbnail: validatedData.thumbnail
+        thumbnail: validatedData.thumbnail,
       };
-      
+
       // Create project
       const project = await storage.createProject(insertData);
       res.status(201).json(project);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const validationError = fromZodError(error);
-        return res.status(400).json({ 
-          message: "Validation error", 
+        return res.status(400).json({
+          message: "Validation error",
           details: validationError.message,
-          errors: error.errors 
+          errors: error.errors,
         });
       }
-      console.error('Error creating project:', error);
-      res.status(500).json({ 
+      console.error("Error creating project:", error);
+      res.status(500).json({
         message: "Failed to create project",
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   });
@@ -100,9 +99,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateData = { ...req.body };
       if (updateData.data) {
         // Validate data based on project type
-        if (existingProject.type === 'mindmap') {
+        if (existingProject.type === "mindmap") {
           mindMapDataSchema.parse(updateData.data);
-        } else if (existingProject.type === 'flowchart') {
+        } else if (existingProject.type === "flowchart") {
           flowchartDataSchema.parse(updateData.data);
         }
       }
@@ -116,16 +115,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const validationError = fromZodError(error);
-        return res.status(400).json({ 
-          message: "Validation error", 
+        return res.status(400).json({
+          message: "Validation error",
           details: validationError.message,
-          errors: error.errors 
+          errors: error.errors,
         });
       }
-      console.error('Error updating project:', error);
-      res.status(500).json({ 
+      console.error("Error updating project:", error);
+      res.status(500).json({
         message: "Failed to update project",
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   });
@@ -193,7 +192,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res
           .status(400)
           .json({ message: "Type must be either 'mindmap' or 'flowchart'" });
-      }      const apiKey = process.env.OPENROUTER_API_KEY || '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';
+      }
+      const apiKey =
+        process.env.OPENROUTER_API_KEY ||
+        "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";
 
       // Construct system prompt based on diagram type
       let systemPrompt = "";
@@ -323,42 +325,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (complexity === "complex") nodeCount = 15;
       if (complexity === "comprehensive") nodeCount = 20;
 
-      console.log(`Generating ${type} with complexity: ${complexity}, node count: ${nodeCount}`);
-      
+      console.log(
+        `Generating ${type} with complexity: ${complexity}, node count: ${nodeCount}`
+      );
+
       try {
-        console.log("Making OpenRouter API request with Llama-4-Maverick model");
-        
+        console.log(
+          "Making OpenRouter API request with Llama-4-Maverick model"
+        );
+
         // Use OpenRouter API to access Llama-4-Maverick model
         const response = await axios({
-          method: 'post',
-          url: 'https://openrouter.ai/api/v1/chat/completions',
+          method: "post",
+          url: "https://openrouter.ai/api/v1/chat/completions",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-            'HTTP-Referer': 'https://your-site-url.com', // Replace with your actual site URL
-            'X-Title': 'Diagram Generator'
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+            "HTTP-Referer": "http://localhost:5000", // Replace with your actual site URL
+            "X-Title": "Diagram Generator",
           },
           data: {
-            model: 'meta-llama/llama-4-maverick:free',
+            model: "google/gemma-3-27b-it:free",
             messages: [
               {
-                role: 'system',
-                content: systemPrompt
+                role: "system",
+                content: systemPrompt,
               },
               {
-                role: 'user',
-                content: `Create a ${type} with approximately ${nodeCount} nodes that represents: ${prompt}\n\nRespond ONLY with valid JSON, nothing else.`
-              }
+                role: "user",
+                content: `Create a ${type} with approximately ${nodeCount} nodes that represents: ${prompt}\n\nRespond ONLY with valid JSON, nothing else.`,
+              },
             ],
             temperature: 0.1,
-            max_tokens: 8192
-          }
-        });        console.log("API response received");
-        
+            max_tokens: 8192,
+          },
+        });
+        console.log("API response received");
+
         if (!response.data?.choices?.[0]?.message?.content) {
-          console.error("Invalid API response structure:", JSON.stringify(response.data));
-          return res.status(500).json({ 
-            message: "AI generation failed. Invalid response structure." 
+          console.error(
+            "Invalid API response structure:",
+            JSON.stringify(response.data)
+          );
+          return res.status(500).json({
+            message: "AI generation failed. Invalid response structure.",
           });
         }
 
@@ -372,11 +382,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else if (generatedText.startsWith("```")) {
           generatedText = generatedText.substring(3);
         }
-        
+
         if (generatedText.endsWith("```")) {
           generatedText = generatedText.substring(0, generatedText.length - 3);
         }
-        
+
         generatedText = generatedText.trim();
 
         try {
@@ -386,13 +396,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Validate the structure based on type
           if (type === "mindmap") {
             if (!jsonResult.rootId || !jsonResult.nodes) {
-              console.error("Invalid mind map structure:", Object.keys(jsonResult));
-              throw new Error("Invalid mind map structure: missing rootId or nodes");
+              console.error(
+                "Invalid mind map structure:",
+                Object.keys(jsonResult)
+              );
+              throw new Error(
+                "Invalid mind map structure: missing rootId or nodes"
+              );
             }
           } else if (type === "flowchart") {
-            if (!Array.isArray(jsonResult.nodes) || !Array.isArray(jsonResult.edges)) {
-              console.error("Invalid flowchart structure:", Object.keys(jsonResult));
-              throw new Error("Invalid flowchart structure: nodes or edges not an array");
+            if (
+              !Array.isArray(jsonResult.nodes) ||
+              !Array.isArray(jsonResult.edges)
+            ) {
+              console.error(
+                "Invalid flowchart structure:",
+                Object.keys(jsonResult)
+              );
+              throw new Error(
+                "Invalid flowchart structure: nodes or edges not an array"
+              );
             }
           }
 
@@ -401,22 +424,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (jsonError: any) {
           console.error("Failed to parse AI response as JSON:", jsonError);
           console.error("Raw text from API:", generatedText);
-          return res.status(500).json({ 
+          return res.status(500).json({
             message: "AI generation produced invalid JSON response.",
-            error: jsonError?.message || 'Unknown JSON parsing error'
+            error: jsonError?.message || "Unknown JSON parsing error",
           });
         }
       } catch (apiError: any) {
         console.error("API request failed:", apiError.message);
         console.error("API error response:", apiError.response?.data);
-        return res.status(500).json({ 
-          message: "Failed to communicate with AI service: " + apiError.message
+        return res.status(500).json({
+          message: "Failed to communicate with AI service: " + apiError.message,
         });
       }
     } catch (error: any) {
       console.error("AI generation error:", error.message);
-      return res.status(500).json({ 
-        message: "Failed to generate diagram with AI: " + error.message
+      return res.status(500).json({
+        message: "Failed to generate diagram with AI: " + error.message,
       });
     }
   });
