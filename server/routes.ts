@@ -193,7 +193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .status(400)
           .json({ message: "Type must be either 'mindmap' or 'flowchart'" });
       }
-      const apiKey = process.env.OPENROUTER_API_KEY || " ";
+      const apiKey = process.env.OPENROUTER_API_KEY || "";
 
       // Construct system prompt based on diagram type
       let systemPrompt = "";
