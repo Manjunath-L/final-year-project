@@ -61,24 +61,17 @@ app.use((req, res, next) => {
   // Backend serves only API routes.
 
   const host = "0.0.0.0";
-  const basePort = Number(process.env.PORT ?? 5000);
+  const port = Number(process.env.PORT ?? 5000);
 
-  const listenWithFallback = (port: number, retriesLeft: number) => {
-    server.once("error", (err: any) => {
-      if (err?.code === "EADDRINUSE" && retriesLeft > 0) {
-        const nextPort = port + 1;
-        log(`port ${port} in use, trying ${nextPort}`);
-        listenWithFallback(nextPort, retriesLeft - 1);
-        return;
-      }
-      throw err;
-    });
+  server.on("error", (err: any) => {
+    if (err?.code === "EADDRINUSE") {
+      console.error(`Port ${port} is already in use. Stop the old backend process and run again.`);
+      process.exit(1);
+    }
+    throw err;
+  });
 
-    server.listen({ port, host }, () => {
-      log(`serving on port ${port}`);
-    });
-  };
-
-  // Try PORT (or 5000), then a few fallbacks.
-  listenWithFallback(basePort, 10);
+  server.listen({ port, host }, () => {
+    log(`serving on port ${port}`);
+  });
 })();
