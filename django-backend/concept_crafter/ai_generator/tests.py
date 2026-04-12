@@ -96,8 +96,9 @@ def test_generate_without_auth_returns_401():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.django_db
-def test_generate_openrouter_request_error_returns_500():
+def test_generate_openrouter_request_error_returns_500(settings):
     import requests as req_lib
+    settings.OPENROUTER_API_KEY = 'test-key'
     user = create_user()
     client = auth_client_for(user)
 
@@ -109,7 +110,8 @@ def test_generate_openrouter_request_error_returns_500():
 
 
 @pytest.mark.django_db
-def test_generate_openrouter_returns_non_json_content_returns_500():
+def test_generate_openrouter_returns_non_json_content_returns_500(settings):
+    settings.OPENROUTER_API_KEY = 'test-key'
     user = create_user()
     client = auth_client_for(user)
 
@@ -127,23 +129,38 @@ def test_generate_openrouter_returns_non_json_content_returns_500():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.django_db
-def test_generate_mindmap_with_valid_json_returns_200():
+def test_generate_without_openrouter_api_key_returns_500(settings):
+    settings.OPENROUTER_API_KEY = ''
+    user = create_user()
+    client = auth_client_for(user)
+
+    response = client.post(GENERATE_URL, {'type': 'mindmap', 'prompt': 'solar system'}, format='json')
+
+    assert response.status_code == 500
+    assert response.json().get('message') == 'OPENROUTER_API_KEY is not configured.'
+
+
+@pytest.mark.django_db
+def test_generate_mindmap_with_valid_json_returns_200(settings):
+    settings.OPENROUTER_API_KEY = 'test-key'
     user = create_user()
     client = auth_client_for(user)
 
     mock_resp = mock_openrouter_response(json.dumps(VALID_MINDMAP_JSON))
 
-    with patch('ai_generator.views.requests.post', return_value=mock_resp):
+    with patch('ai_generator.views.requests.post', return_value=mock_resp) as mock_post:
         response = client.post(GENERATE_URL, {'type': 'mindmap', 'prompt': 'solar system'}, format='json')
 
     assert response.status_code == 200
     data = response.json()
     assert 'rootId' in data
     assert 'nodes' in data
+    assert mock_post.call_args.kwargs['headers']['Authorization'] == 'Bearer test-key'
 
 
 @pytest.mark.django_db
-def test_generate_mindmap_with_json_wrapped_in_markdown_fences_returns_200():
+def test_generate_mindmap_with_json_wrapped_in_markdown_fences_returns_200(settings):
+    settings.OPENROUTER_API_KEY = 'test-key'
     user = create_user()
     client = auth_client_for(user)
 
@@ -160,8 +177,9 @@ def test_generate_mindmap_with_json_wrapped_in_markdown_fences_returns_200():
 
 
 @pytest.mark.django_db
-def test_generate_mindmap_with_plain_markdown_fences_returns_200():
+def test_generate_mindmap_with_plain_markdown_fences_returns_200(settings):
     """Handles ``` fences without the 'json' language tag."""
+    settings.OPENROUTER_API_KEY = 'test-key'
     user = create_user()
     client = auth_client_for(user)
 

@@ -35,6 +35,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -87,6 +88,8 @@ USE_TZ = True
 
 # Static files
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -115,8 +118,13 @@ SIMPLE_JWT = {
 # CORS
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='', cast=Csv()) if not DEBUG else []
+CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # AI backend (LM Studio or OpenRouter)
 OPENROUTER_API_KEY = config('OPENROUTER_API_KEY', default='')
 AI_BASE_URL = config('AI_BASE_URL', default='https://openrouter.ai/api/v1/chat/completions')
 AI_MODEL = config('AI_MODEL', default='google/gemma-3-27b-it:free')
+AI_HTTP_REFERER = config('AI_HTTP_REFERER', default='http://localhost:3000')
+AI_APP_TITLE = config('AI_APP_TITLE', default='Concept Crafter')

@@ -1,6 +1,7 @@
 import json
 import requests
 from django.conf import settings
+from requests.exceptions import TooManyRedirects
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -209,6 +210,12 @@ class GenerateView(APIView):
             f"Start your response with {{ and end with }}."
         )
 
+        if not settings.OPENROUTER_API_KEY:
+            return Response(
+                {'message': 'OPENROUTER_API_KEY is not configured.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
         try:
             response = requests.post(
                 settings.AI_BASE_URL,
@@ -221,11 +228,31 @@ class GenerateView(APIView):
                     'temperature': 0.1,
                     'max_tokens': 8192,
                 },
-                headers={'Content-Type': 'application/json'},
+                headers={
+                    'Authorization': f'Bearer {settings.OPENROUTER_API_KEY}',
+                    'Content-Type': 'application/json',
+                    'HTTP-Referer': settings.AI_HTTP_REFERER,
+                    'X-Title': settings.AI_APP_TITLE,
+                },
+                allow_redirects=False,
                 timeout=120,
             )
+            if response.is_redirect:
+                return Response(
+                    {
+                        'message': 'AI service redirected the request.',
+                        'redirect_to': response.headers.get('Location', ''),
+                        'status_code': response.status_code,
+                    },
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
             response.raise_for_status()
             raw_text = response.json()['choices'][0]['message']['content']
+        except TooManyRedirects as exc:
+            return Response(
+                {'message': f'AI service returned too many redirects: {exc}'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
         except Exception as exc:
             return Response(
                 {'message': f'Failed to communicate with AI service: {exc}'},

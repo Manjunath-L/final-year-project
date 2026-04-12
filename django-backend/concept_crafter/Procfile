@@ -1,0 +1,1 @@
+web: gunicorn concept_crafter.wsgi --log-file -
