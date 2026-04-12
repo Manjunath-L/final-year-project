@@ -23,9 +23,12 @@ const config = {
   ],
   server: {
     // Forward frontend API calls to the separate backend server.
+    // Set VITE_API_TARGET to switch backends:
+    //   Django:  VITE_API_TARGET=http://localhost:8000
+    //   Node.js: VITE_API_TARGET=http://localhost:5000 (default)
     proxy: {
       "/api": {
-        target: "http://localhost:5000",
+        target: process.env.VITE_API_TARGET || "http://localhost:8000",
         changeOrigin: true,
       },
     },

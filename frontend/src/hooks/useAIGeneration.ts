@@ -28,7 +28,7 @@ export function useAIGeneration() {
     setIsGenerating(true);
 
     try {
-      const response = await apiRequest('POST', '/api/generate', {
+      const response = await apiRequest('POST', '/api/generate/', {
         type,
         prompt,
         options: options || {

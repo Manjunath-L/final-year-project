@@ -30,7 +30,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
   const handleDelete = async () => {
     try {
-      await apiRequest('DELETE', `/api/projects/${project.id}`);
+      await apiRequest('DELETE', `/api/projects/${project.id}/`);
       
       toast({
         title: 'Project deleted',
@@ -38,9 +38,8 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       });
       
       // Invalidate projects query to mark it stale
-      await queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-      // Explicitly refetch the query to update the UI immediately
-      await queryClient.refetchQueries({ queryKey: ['/api/projects'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/projects/'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/projects/'] });
 
     } catch (error) {
       console.error("Error deleting project:", error);

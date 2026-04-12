@@ -68,7 +68,7 @@ export default function AIGeneratorModal({
         options: { complexity }
       });
       
-      const response = await apiRequest('POST', '/api/generate', {
+      const response = await apiRequest('POST', '/api/generate/', {
         type: diagramType,
         prompt,
         options: {

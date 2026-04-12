@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserData = async (authToken: string) => {
     try {
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch('/api/auth/me/', {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -75,6 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(data.user);
         setToken(data.token);
         localStorage.setItem('token', data.token);
+        if (data.refresh) localStorage.setItem('refresh', data.refresh);
         toast({
           title: 'Success',
           description: 'Logged in successfully!',
@@ -104,7 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (username: string, email: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch('/api/auth/register/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -118,6 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(data.user);
         setToken(data.token);
         localStorage.setItem('token', data.token);
+        if (data.refresh) localStorage.setItem('refresh', data.refresh);
         toast({
           title: 'Success',
           description: 'Account created successfully!',
@@ -145,9 +147,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
+    const refreshToken = localStorage.getItem('refresh');
+    if (refreshToken) {
+      fetch('/api/auth/logout/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh: refreshToken }),
+      }).catch(() => {}); // fire and forget
+    }
     setUser(null);
     setToken(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('refresh');
     toast({
       title: 'Success',
       description: 'Logged out successfully',

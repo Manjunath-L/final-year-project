@@ -37,7 +37,7 @@ export default function MindMapPage({ id, setProjectName }: MindMapPageProps) {
   
   // Fetch project data if id is provided
   const { data: project, isLoading } = useQuery<Project>({
-    queryKey: id ? [`/api/projects/${id}`] : ['/api/dummy-key'],
+    queryKey: id ? [`/api/projects/${id}/`] : ['/api/dummy-key'],
     enabled: !!id,
   });
   
@@ -119,7 +119,7 @@ export default function MindMapPage({ id, setProjectName }: MindMapPageProps) {
 
       if (id) {
         // Update existing project
-        const response = await apiRequest('PUT', `/api/projects/${id}`, {
+        const response = await apiRequest('PATCH', `/api/projects/${id}/`, {
           data,
           thumbnail
         });
@@ -130,7 +130,7 @@ export default function MindMapPage({ id, setProjectName }: MindMapPageProps) {
         }
       } else {
         // Create new project
-        const response = await apiRequest('POST', '/api/projects', {
+        const response = await apiRequest('POST', '/api/projects/', {
           name: templateName || 'Untitled Mind Map',
           type: 'mindmap',
           data,
@@ -147,7 +147,7 @@ export default function MindMapPage({ id, setProjectName }: MindMapPageProps) {
         window.history.pushState({}, '', `/mindmap/${newProject.id}`);
       }
 
-      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects/'] });
       
       toast({
         title: 'Success',

@@ -46,7 +46,7 @@ export default function AIGeneratorPage() {
       }
       
       // Create a new project with the generated data
-      const response = await apiRequest('POST', '/api/projects', {
+      const response = await apiRequest('POST', '/api/projects/', {
         name: 'AI Generated ' + (isMindMap ? 'Mind Map' : 'Flowchart'),
         type: isMindMap ? 'mindmap' : 'flowchart',
         data,

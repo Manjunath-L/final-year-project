@@ -13,7 +13,7 @@ export default function Dashboard() {
     data: projects = [], 
     isLoading: projectsLoading 
   } = useQuery({
-    queryKey: ['/api/projects'],
+    queryKey: ['/api/projects/'],
   });
   
   // Fetch templates
@@ -21,7 +21,7 @@ export default function Dashboard() {
     data: templates = [], 
     isLoading: templatesLoading 
   } = useQuery({
-    queryKey: ['/api/templates'],
+    queryKey: ['/api/templates/'],
   });
   
   return (
