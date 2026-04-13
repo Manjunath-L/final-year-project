@@ -11,10 +11,10 @@ pnpm-debug.log*
 # Local env files
 .env
 .env.*
+!.env.example
 
 # OS / editor
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
-

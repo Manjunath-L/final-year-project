@@ -3,47 +3,48 @@ import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
 import path, { dirname } from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { fileURLToPath } from "url";
+import { defineConfig, loadEnv } from "vite";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const config = {
-  plugins: [
-    react(),
-    runtimeErrorOverlay(),
-    themePlugin(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-        ]
-      : []),
-  ],
-  server: {
-    // Forward frontend API calls to the separate backend server.
-    // Set VITE_API_TARGET to switch backends:
-    //   Django:  VITE_API_TARGET=http://localhost:8000
-    //   Node.js: VITE_API_TARGET=http://localhost:5000 (default)
-    proxy: {
-      "/api": {
-        target: process.env.VITE_API_TARGET || "http://localhost:8000",
-        changeOrigin: true,
+export default defineConfig(async ({ mode }) => {
+  const env = loadEnv(mode, __dirname, "");
+  const apiProxyTarget = env.VITE_API_TARGET?.replace(/\/$/, "");
+
+  return {
+    plugins: [
+      react(),
+      runtimeErrorOverlay(),
+      themePlugin(),
+      ...(env.NODE_ENV !== "production" && env.REPL_ID !== undefined
+        ? [
+            await import("@replit/vite-plugin-cartographer").then((m) =>
+              m.cartographer(),
+            ),
+          ]
+        : []),
+    ],
+    server: apiProxyTarget
+      ? {
+          proxy: {
+            "/api": {
+              target: apiProxyTarget,
+              changeOrigin: true,
+            },
+          },
+        }
+      : undefined,
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "src"),
+        "@shared": path.resolve(__dirname, "src", "shared"),
       },
     },
-  },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-      "@shared": path.resolve(__dirname, "src", "shared"),
+    root: __dirname,
+    build: {
+      outDir: path.resolve(__dirname, "dist/public"),
+      emptyOutDir: true,
     },
-  },
-  root: __dirname,
-  build: {
-    outDir: path.resolve(__dirname, "dist/public"),
-    emptyOutDir: true,
-  },
-};
-
-export default config;
+  };
+});

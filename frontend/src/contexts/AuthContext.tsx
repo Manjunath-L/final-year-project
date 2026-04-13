@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { apiUrl } from '@/lib/api';
 
 interface User {
   id: number;
@@ -15,6 +16,20 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<boolean>;
   signup: (username: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
+}
+
+function getErrorMessage(data: unknown, fallback: string): string {
+  if (!data || typeof data !== 'object') return fallback;
+  const maybeMessage = (data as { message?: unknown }).message;
+  if (typeof maybeMessage === 'string') return maybeMessage;
+
+  const firstError = Object.entries(data as Record<string, unknown>)[0];
+  if (!firstError) return fallback;
+
+  const [field, value] = firstError;
+  const message = Array.isArray(value) ? value[0] : value;
+  if (typeof message !== 'string') return fallback;
+  return `${field}: ${message}`;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserData = async (authToken: string) => {
     try {
-      const response = await fetch('/api/auth/me/', {
+      const response = await fetch(apiUrl('/api/auth/me/'), {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -61,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/auth/login/', {
+      const response = await fetch(apiUrl('/api/auth/login/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -84,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         toast({
           title: 'Error',
-          description: data.message || 'Failed to login',
+          description: getErrorMessage(data, 'Failed to login'),
           variant: 'destructive',
         });
         return false;
@@ -105,7 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (username: string, email: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/auth/register/', {
+      const response = await fetch(apiUrl('/api/auth/register/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -128,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         toast({
           title: 'Error',
-          description: data.message || 'Failed to create account',
+          description: getErrorMessage(data, 'Failed to create account'),
           variant: 'destructive',
         });
         return false;
@@ -148,10 +163,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     const refreshToken = localStorage.getItem('refresh');
-    if (refreshToken) {
-      fetch('/api/auth/logout/', {
+    const accessToken = localStorage.getItem('token');
+    if (refreshToken && accessToken) {
+      fetch(apiUrl('/api/auth/logout/'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ refresh: refreshToken }),
       }).catch(() => {}); // fire and forget
     }
