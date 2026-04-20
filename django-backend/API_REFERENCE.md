@@ -3,6 +3,7 @@
 Base URL: `https://your-server.com`
 
 All protected endpoints require:
+
 ```
 Authorization: Bearer <access_token>
 ```
@@ -14,6 +15,7 @@ Authorization: Bearer <access_token>
 ### POST /api/auth/register/
 
 **Input:**
+
 ```json
 {
   "username": "testuser",
@@ -23,6 +25,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Expected Output (201):**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -36,6 +39,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Error (400) — duplicate username or email:**
+
 ```json
 {
   "message": "username: A user with that username already exists.",
@@ -50,6 +54,7 @@ Authorization: Bearer <access_token>
 ### POST /api/auth/login/
 
 **Input:**
+
 ```json
 {
   "username": "testuser",
@@ -58,6 +63,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Expected Output (200):**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -71,6 +77,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Error (400) — wrong credentials:**
+
 ```json
 {
   "message": "Invalid username or password"
@@ -84,6 +91,7 @@ Authorization: Bearer <access_token>
 **Headers:** `Authorization: Bearer <token>`
 
 **Input:**
+
 ```json
 {
   "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -91,6 +99,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Expected Output (200):**
+
 ```json
 {
   "message": "Logout successful"
@@ -98,6 +107,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Error (400) — missing refresh token:**
+
 ```json
 {
   "message": "Refresh token is required"
@@ -105,6 +115,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Error (400) — invalid/expired refresh token:**
+
 ```json
 {
   "message": "Token is invalid or expired"
@@ -120,6 +131,7 @@ Authorization: Bearer <access_token>
 **Input:** none
 
 **Expected Output (200):**
+
 ```json
 {
   "user": {
@@ -131,6 +143,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Error (401) — missing or invalid token:**
+
 ```json
 {
   "detail": "Authentication credentials were not provided."
@@ -152,6 +165,7 @@ List all projects for the authenticated user.
 **Input:** none
 
 **Expected Output (200):**
+
 ```json
 [
   {
@@ -173,6 +187,7 @@ List all projects for the authenticated user.
 Create a new project.
 
 **Input:**
+
 ```json
 {
   "name": "My Flowchart",
@@ -183,6 +198,7 @@ Create a new project.
 ```
 
 **Expected Output (201):**
+
 ```json
 {
   "id": 1,
@@ -204,6 +220,7 @@ Get a single project by ID.
 **Input:** none
 
 **Expected Output (200):**
+
 ```json
 {
   "id": 1,
@@ -217,6 +234,7 @@ Get a single project by ID.
 ```
 
 **Error (404):**
+
 ```json
 {
   "detail": "No Project matches the given query."
@@ -230,6 +248,7 @@ Get a single project by ID.
 Full update of a project (all fields required).
 
 **Input:**
+
 ```json
 {
   "name": "Updated Flowchart",
@@ -240,6 +259,7 @@ Full update of a project (all fields required).
 ```
 
 **Expected Output (200):**
+
 ```json
 {
   "id": 1,
@@ -259,6 +279,7 @@ Full update of a project (all fields required).
 Partial update (only send fields you want to change).
 
 **Input:**
+
 ```json
 {
   "name": "Renamed Project"
@@ -266,6 +287,7 @@ Partial update (only send fields you want to change).
 ```
 
 **Expected Output (200):**
+
 ```json
 {
   "id": 1,
@@ -297,6 +319,7 @@ List all available templates.
 **Input:** none
 
 **Expected Output (200):**
+
 ```json
 [
   {
@@ -318,6 +341,7 @@ List all available templates.
 **Headers:** `Authorization: Bearer <token>`
 
 **Input:**
+
 ```json
 {
   "type": "flowchart",
@@ -334,6 +358,7 @@ List all available templates.
 ---
 
 **Expected Output (200) — flowchart:**
+
 ```json
 {
   "nodes": [
@@ -393,6 +418,7 @@ List all available templates.
 ```
 
 **Expected Output (200) — mindmap:**
+
 ```json
 {
   "rootId": "1",
@@ -420,6 +446,7 @@ List all available templates.
 ```
 
 **Error (400) — missing fields:**
+
 ```json
 {
   "message": "Type and prompt are required"
@@ -427,6 +454,7 @@ List all available templates.
 ```
 
 **Error (400) — invalid type:**
+
 ```json
 {
   "message": "Type must be either 'mindmap' or 'flowchart'"
@@ -434,6 +462,7 @@ List all available templates.
 ```
 
 **Error (500) — AI service not configured:**
+
 ```json
 {
   "message": "OPENROUTER_API_KEY is not configured."
@@ -441,6 +470,7 @@ List all available templates.
 ```
 
 **Error (500) — AI returned bad JSON:**
+
 ```json
 {
   "message": "AI generation produced invalid JSON response."
@@ -448,8 +478,29 @@ List all available templates.
 ```
 
 **Error (502) — AI service unreachable:**
+
 ```json
 {
   "message": "Failed to communicate with AI service: ..."
 }
 ```
+
+{
+"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2MTgxNTY2LCJpYXQiOjE3NzYwOTUxNjYsImp0aSI6ImY0NDg4YjcxZDY3ODQ0ODJhNzI3MGQ2ODI4MDA0NjVjIiwidXNlcl9pZCI6IjEifQ.RQuW5aLsqaD2WH2T6OgCQbSeWURjpeSx33doCC1-7N4",
+"refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc3NjY5OTk2NiwiaWF0IjoxNzc2MDk1MTY2LCJqdGkiOiIxNTgzNzZmNDNiMGQ0NDRkOGNjYjJkYjNkNDk1YzIwMCIsInVzZXJfaWQiOiIxIn0.S4UHAHc36GQxCzCjSOlwgYkTVm9_gMoTa97wzFQ2POU",
+"user": {
+"id": 1,
+"username": "testuser",
+"email": "test@example.com"
+}
+}
+
+{
+"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2MTgxNjIwLCJpYXQiOjE3NzYwOTUyMjAsImp0aSI6IjYyOTZiNGY1MjhhZDQ2Y2M4YmE4NTMwZTk4N2EyNTRlIiwidXNlcl9pZCI6IjEifQ.zIzwqd3Db1FJd-lQ0vLZAu3Ja6O_4Pn-RBM5NXXT8k0",
+"refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc3NjcwMDAyMCwiaWF0IjoxNzc2MDk1MjIwLCJqdGkiOiJjMDliNjExNTBjZGY0ZTQ2OTgxMGEwMGVjMTAyOTNkNiIsInVzZXJfaWQiOiIxIn0.Nse2sAIm4NTHAUhu845MPodnbpA6rk1f3rAkmTqc_IA",
+"user": {
+"id": 1,
+"username": "testuser",
+"email": "test@example.com"
+}
+}
